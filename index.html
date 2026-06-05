@@ -9,23 +9,28 @@
         button { padding: 15px 30px; font-size: 18px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; }
         button:hover { background-color: #0056b3; }
     </style>
-    <!-- Vapi Web SDK -->
-    <script src="https://unpkg.com/@vapi-ai/web@latest"></script>
+    
+    <!-- Updated CDN link for browser compatibility -->
+    <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/index.min.js"></script>
 </head>
 <body>
     <h1>Talk to Brij's AI Assistant</h1>
     <button id="vapi-btn">Start Interview</button>
 
     <script>
-        // Replace these with your actual credentials
-        const publicKey = '7fb0ee2c-8348-4172-8e00-216308ecc8b3';
-        const assistantId = 'e6027c22-8da9-426d-b621-87da74856ae2';
+        // Ensure the DOM is ready before initializing
+        window.addEventListener('load', () => {
+            // Replace 'YOUR_PUBLIC_KEY_HERE' with your actual public key (vapi-pub-...)
+            const vapi = new Vapi('7fb0ee2c-8348-4172-8e00-216308ecc8b3');
+            const button = document.getElementById('vapi-btn');
 
-        const vapi = new Vapi(publicKey);
-        const button = document.getElementById('vapi-btn');
-
-        button.addEventListener('click', () => {
-            vapi.start(assistantId);
+            button.addEventListener('click', () => {
+                console.log('Attempting to start call...');
+                // Using your specific Assistant ID
+                vapi.start('e6027c22-8da9-426d-b621-87da74856ae2')
+                    .then(() => console.log('Call successfully started'))
+                    .catch(err => console.error('Error starting call:', err));
+            });
         });
     </script>
 </body>
