@@ -19,7 +19,7 @@
       border-radius: 16px;
       padding: 2.5rem;
       text-align: center;
-      width: 300px;
+      width: 320px;
       box-shadow: 0 2px 16px rgba(0,0,0,0.08);
       display: flex;
       flex-direction: column;
@@ -44,6 +44,7 @@
       width: 8px; height: 8px;
       border-radius: 50%;
       background: #aaa;
+      flex-shrink: 0;
     }
     .dot.live { background: #1d9e75; animation: pulse 1s infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
@@ -62,6 +63,7 @@
     button:hover { background: #0C447C; }
     button.end { background: #a32d2d; }
     button.end:hover { background: #791f1f; }
+    button:disabled { background: #aaa; cursor: not-allowed; }
     .note { font-size: 0.75rem; color: #aaa; }
     #transcript {
       width: 100%;
@@ -71,6 +73,9 @@
       font-size: 0.82rem;
       line-height: 1.6;
       color: #333;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 8px 10px;
       display: none;
     }
     #transcript p { margin: 4px 0; }
@@ -86,59 +91,87 @@
 
   <div class="status">
     <span class="dot" id="dot"></span>
-    <span id="statusText">Ready to connect</span>
+    <span id="statusText">Loading SDK…</span>
   </div>
 
   <div id="transcript"></div>
 
-  <button id="callBtn" onclick="toggleCall()">📞 Start Call</button>
+  <button id="callBtn" disabled onclick="toggleCall()">📞 Start Call</button>
   <p class="note">No phone number needed · Uses your mic</p>
 </div>
 
-<!-- Vapi Web SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/vapi.js"></script>
+<!-- ✅ Correct CDN: UMD build via jsDelivr -->
+<script src="https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js"></script>
 
 <script>
-  const PUBLIC_KEY  = "38308316-bd09-45a0-894a-55af9a09eb11";   // 🔑 from Vapi Dashboard → Account → API Keys
-  const ASSISTANT_ID = "e6027c22-8da9-426d-b621-87da74856ae2";  // your assistant ID
+  // ── Config ────────────────────────────────────────────────────
+  var PUBLIC_KEY   = "YOUR_VAPI_PUBLIC_KEY";          // Vapi Dashboard → Account → API Keys → Public Key
+  var ASSISTANT_ID = "e6027c22-8da9-426d-b621-87da74856ae2"; // Your assistant ID
 
-  const vapi = new Vapi(PUBLIC_KEY);
-  let active = false;
+  // ── State ─────────────────────────────────────────────────────
+  var active = false;
+  var vapi   = null;
 
-  // ── Event listeners ──────────────────────────────────────────
-  vapi.on("call-start", () => {
-    setStatus("Connected · Speak now", true);
-    document.getElementById("transcript").style.display = "block";
-  });
-
-  vapi.on("call-end", () => {
-    setStatus("Call ended", false);
-    active = false;
-    const btn = document.getElementById("callBtn");
-    btn.textContent = "📞 Start Call";
-    btn.classList.remove("end");
-  });
-
-  vapi.on("speech-start", () => setStatus("Agent speaking…", true));
-  vapi.on("speech-end",   () => setStatus("Listening…", true));
-
-  vapi.on("message", (msg) => {
-    if (msg.type === "transcript") {
-      addTranscript(msg.role, msg.transcript);
+  // ── Init after SDK loads ──────────────────────────────────────
+  window.addEventListener("load", function () {
+    if (typeof window.Vapi !== "undefined") {
+      vapi = new window.Vapi(PUBLIC_KEY);
+      attachEvents();
+      setStatus("Ready to connect", false);
+      document.getElementById("callBtn").disabled = false;
+    } else if (typeof window.vapiSDK !== "undefined") {
+      // html-script-tag bundle exposes vapiSDK, not Vapi directly
+      // Use it as a wrapper
+      setStatus("Ready to connect", false);
+      document.getElementById("callBtn").disabled = false;
+      document.getElementById("callBtn").onclick = toggleCallVapiSDK;
+    } else {
+      setStatus("SDK failed to load", false);
     }
   });
 
-  vapi.on("error", (err) => {
-    console.error(err);
-    setStatus("Error — check console", false);
-  });
+  // ── Events (for @vapi-ai/web style) ──────────────────────────
+  function attachEvents() {
+    vapi.on("call-start", function () {
+      setStatus("Connected · Speak now", true);
+      document.getElementById("transcript").style.display = "block";
+    });
 
-  // ── Controls ─────────────────────────────────────────────────
+    vapi.on("call-end", function () {
+      setStatus("Call ended", false);
+      active = false;
+      var btn = document.getElementById("callBtn");
+      btn.textContent = "📞 Start Call";
+      btn.classList.remove("end");
+    });
+
+    vapi.on("speech-start", function () { setStatus("Agent speaking…", true); });
+    vapi.on("speech-end",   function () { setStatus("Listening…", true); });
+
+    vapi.on("message", function (msg) {
+      if (msg.type === "transcript" && msg.transcriptType === "final") {
+        addTranscript(msg.role, msg.transcript);
+      }
+    });
+
+    vapi.on("error", function (err) {
+      console.error("Vapi error:", err);
+      setStatus("Error: " + (err.message || "check console"), false);
+      active = false;
+      var btn = document.getElementById("callBtn");
+      btn.textContent = "📞 Start Call";
+      btn.classList.remove("end");
+    });
+  }
+
+  // ── Toggle call ───────────────────────────────────────────────
   function toggleCall() {
+    if (!vapi) return;
+
     if (!active) {
       active = true;
       setStatus("Connecting…", false);
-      const btn = document.getElementById("callBtn");
+      var btn = document.getElementById("callBtn");
       btn.textContent = "🔴 End Call";
       btn.classList.add("end");
       vapi.start(ASSISTANT_ID);
@@ -147,14 +180,30 @@
     }
   }
 
+  // ── Fallback for vapiSDK bundle ───────────────────────────────
+  function toggleCallVapiSDK() {
+    if (!active) {
+      active = true;
+      window.vapiSDK.run({
+        apiKey: PUBLIC_KEY,
+        assistant: ASSISTANT_ID,
+        config: { position: "bottom-right", offset: "40px", width: "50px", height: "50px" }
+      });
+      setStatus("Connected via widget", true);
+      document.getElementById("callBtn").textContent = "🔴 End (use widget button)";
+      document.getElementById("callBtn").classList.add("end");
+    }
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────
   function setStatus(text, live) {
     document.getElementById("statusText").textContent = text;
     document.getElementById("dot").className = "dot" + (live ? " live" : "");
   }
 
   function addTranscript(role, text) {
-    const box = document.getElementById("transcript");
-    const p = document.createElement("p");
+    var box = document.getElementById("transcript");
+    var p = document.createElement("p");
     p.className = role === "user" ? "user" : "bot";
     p.textContent = (role === "user" ? "You: " : "Agent: ") + text;
     box.appendChild(p);
