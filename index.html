@@ -19,7 +19,7 @@
 </head>
 <body>
     <h1>Brij Patel's AI Assistant</h1>
-    <p>The chat interface will appear in the bottom-right corner.</p>
+    <p>Loading the chat interface...</p>
 
     <script>
         (function (d, t) {
@@ -32,12 +32,13 @@
             
             g.onload = function () {
                 window.vapiSDK.run({
-                    apiKey: process.env.VAPI_PUBLIC_KEY, // REPLACE WITH YOUR vapi-pub- KEY
+                    // PASTE YOUR PUBLIC KEY BELOW
+                    apiKey: "YOUR_PUBLIC_KEY_HERE", 
                     assistant: "e6027c22-8da9-426d-b621-87da74856ae2",
                     config: {
-                        mode: "chat",           // Forces text-only mode
-                        showChat: true,         // Shows the input box
-                        showTranscript: true,   // Shows the conversation history
+                        mode: "chat",           
+                        showChat: true,         
+                        showTranscript: true,   
                         position: "bottom-right"
                     }
                 });
