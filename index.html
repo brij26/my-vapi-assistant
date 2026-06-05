@@ -2,22 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interview with Brij Patel</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #121212; color: white; }
-        h1 { margin-bottom: 20px; }
-        .description { margin-bottom: 30px; color: #aaa; text-align: center; max-width: 500px; }
+        body { 
+            font-family: sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            background-color: #121212; 
+            color: white; 
+        }
     </style>
 </head>
 <body>
     <h1>Brij Patel's AI Assistant</h1>
-    <p class="description">Click the button below to start a voice or text-based interview. The interface will display a live transcript as we speak.</p>
+    <p>The chat interface will appear in the bottom-right corner.</p>
 
     <script>
-        var vapiInstance = null;
-        const assistantId = 'e6027c22-8da9-426d-b621-87da74856ae2';
-        const apiKey = '7fb0ee2c-8348-4172-8e00-216308ecc8b3'; // REPLACE WITH YOUR vapi-pub- KEY
-
         (function (d, t) {
             var g = document.createElement(t),
                 s = d.getElementsByTagName(t)[0];
@@ -27,13 +31,13 @@
             s.parentNode.insertBefore(g, s);
             
             g.onload = function () {
-                vapiInstance = window.vapiSDK.run({
-                    apiKey: apiKey,
-                    assistant: assistantId,
+                window.vapiSDK.run({
+                    apiKey: process.env.VAPI_PUBLIC_KEY, // REPLACE WITH YOUR vapi-pub- KEY
+                    assistant: "e6027c22-8da9-426d-b621-87da74856ae2",
                     config: {
-                        // This enables the beautiful, built-in UI
-                        showChat: true,
-                        showTranscript: true,
+                        mode: "chat",           // Forces text-only mode
+                        showChat: true,         // Shows the input box
+                        showTranscript: true,   // Shows the conversation history
                         position: "bottom-right"
                     }
                 });
