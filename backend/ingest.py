@@ -1,29 +1,49 @@
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import (
+    PyPDFLoader
+)
 
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import (
+    RecursiveCharacterTextSplitter
+)
 
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_openai import (
+    OpenAIEmbeddings
+)
 
-from langchain_community.vectorstores import Chroma
+from langchain_pinecone import (
+    PineconeVectorStore
+)
 
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # =========================
-# LOAD ALL PDFS
+# LOAD DOCUMENTS
 # =========================
 
 documents = []
 
-# Resume
+# =========================
+# LOAD RESUME
+# =========================
+
+resume_path = "data/resume.pdf"
+
 resume_loader = PyPDFLoader(
-    "data/Resume_Brij_Patel.pdf"
+    resume_path
 )
 
-documents.extend(
-    resume_loader.load()
-)
+resume_docs = resume_loader.load()
 
-# GitHub PDFs
+documents.extend(resume_docs)
+
+# =========================
+# LOAD GITHUB DOCS
+# =========================
+
 github_docs_path = "data/github_docs"
 
 for file in os.listdir(github_docs_path):
@@ -35,14 +55,14 @@ for file in os.listdir(github_docs_path):
             file
         )
 
-        loader = PyPDFLoader(path)
+        github_loader = PyPDFLoader(path)
 
-        documents.extend(
-            loader.load()
-        )
+        github_docs = github_loader.load()
+
+        documents.extend(github_docs)
 
 # =========================
-# SPLIT TEXT
+# SPLIT
 # =========================
 
 splitter = RecursiveCharacterTextSplitter(
@@ -55,23 +75,21 @@ docs = splitter.split_documents(
 )
 
 # =========================
-# EMBEDDINGS
+# OPENAI EMBEDDINGS
 # =========================
 
-embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+embeddings = OpenAIEmbeddings(
+    model="text-embedding-3-small"
 )
 
 # =========================
-# CREATE VECTOR DB
+# PINECONE STORE
 # =========================
 
-db = Chroma.from_documents(
+vectorstore = PineconeVectorStore.from_documents(
     docs,
-    embeddings,
-    persist_directory="vectordb"
+    embedding=embeddings,
+    index_name=os.getenv("PINECONE_INDEX")
 )
 
-db.persist()
-
-print("Vector Database Created Successfully")
+print("Pinecone Upload Successful")

@@ -3,14 +3,10 @@ uvicorn
 langchain
 langchain-community
 langchain-openai
-langchain-huggingface
 langchain-text-splitters
-langchain_docling
 langchain_classic
-langchain_chroma
+langchain-pinecone
 langsmith
-chromadb
-sentence-transformers
 pypdf
 python-dotenv
 requests

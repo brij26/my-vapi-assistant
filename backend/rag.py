@@ -1,32 +1,36 @@
-from langchain_huggingface import (
-    HuggingFaceEmbeddings
+from langchain_openai import OpenAIEmbeddings
+
+from langchain_pinecone import PineconeVectorStore
+
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# =========================
+# EMBEDDINGS
+# =========================
+
+embeddings = OpenAIEmbeddings(
+    model="text-embedding-3-small"
 )
 
-from langchain_chroma import Chroma
-
 # =========================
-# LOAD EMBEDDINGS
+# VECTOR STORE
 # =========================
 
-embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+vectorstore = PineconeVectorStore(
+    index_name=os.getenv("PINECONE_INDEX"),
+    embedding=embeddings
 )
 
-# =========================
-# LOAD VECTOR DB
-# =========================
-
-db = Chroma(
-    persist_directory="vectordb",
-    embedding_function=embeddings
-)
-
-retriever = db.as_retriever(
+retriever = vectorstore.as_retriever(
     search_kwargs={"k": 4}
 )
 
 # =========================
-# RETRIEVE CONTEXT
+# RETRIEVE
 # =========================
 
 def retrieve_context(query):
