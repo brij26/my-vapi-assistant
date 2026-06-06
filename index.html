@@ -1,766 +1,165 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Voice Assistant</title>
-    <link rel="icon" href="data:,">
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f0f2f5;
-      }
-      .container {
-        width: 420px;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Voice Assistant</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f5f3;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 2.5rem;
+      text-align: center;
+      width: 300px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+    }
+    .avatar {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: #e6f1fb;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+    }
+    h2 { font-size: 1.2rem; font-weight: 600; }
+    .subtitle { font-size: 0.85rem; color: #666; }
+    .status {
+      font-size: 0.85rem;
+      color: #555;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #aaa;
+    }
+    .dot.live { background: #1d9e75; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: #185FA5;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #0C447C; }
+    button.end { background: #a32d2d; }
+    button.end:hover { background: #791f1f; }
+    .note { font-size: 0.75rem; color: #aaa; }
+    #transcript {
+      width: 100%;
+      max-height: 160px;
+      overflow-y: auto;
+      text-align: left;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #333;
+      display: none;
+    }
+    #transcript p { margin: 4px 0; }
+    #transcript .user { color: #185FA5; }
+    #transcript .bot  { color: #1d9e75; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="avatar">🤖</div>
+  <h2>AI Voice Assistant</h2>
+  <p class="subtitle">Talk to our agent — free, right from your browser</p>
 
-      /* Header */
-      .header {
-        background: #185fa5;
-        color: white;
-        padding: 1.25rem 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      .avatar {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.4rem;
-        flex-shrink: 0;
-      }
-      .header-info h2 {
-        font-size: 1rem;
-        font-weight: 600;
-      }
-      .header-info p {
-        font-size: 0.78rem;
-        opacity: 0.8;
-      }
-      .status-badge {
-        margin-left: auto;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.78rem;
-        background: rgba(255, 255, 255, 0.15);
-        padding: 4px 10px;
-        border-radius: 20px;
-      }
-      .dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: #aaa;
-        flex-shrink: 0;
-      }
-      .dot.live {
-        background: #4ade80;
-        animation: pulse 1s infinite;
-      }
-      .dot.loading {
-        background: #fbbf24;
-        animation: pulse 0.6s infinite;
-      }
-      @keyframes pulse {
-        0%,
-        100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.3;
-        }
-      }
+  <div class="status">
+    <span class="dot" id="dot"></span>
+    <span id="statusText">Ready to connect</span>
+  </div>
 
-      /* Transcript area */
-      .transcript {
-        flex: 1;
-        height: 360px;
-        overflow-y: auto;
-        padding: 1.25rem;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        background: #f8f9fb;
-      }
-      .transcript::-webkit-scrollbar {
-        width: 4px;
-      }
-      .transcript::-webkit-scrollbar-thumb {
-        background: #ddd;
-        border-radius: 4px;
-      }
+  <div id="transcript"></div>
 
-      .bubble-wrap {
-        display: flex;
-        gap: 8px;
-        align-items: flex-end;
-      }
-      .bubble-wrap.user {
-        flex-direction: row-reverse;
-      }
+  <button id="callBtn" onclick="toggleCall()">📞 Start Call</button>
+  <p class="note">No phone number needed · Uses your mic</p>
+</div>
 
-      .bubble-avatar {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        flex-shrink: 0;
-      }
-      .bubble-avatar.agent {
-        background: #e6f1fb;
-        color: #185fa5;
-        font-weight: 600;
-      }
-      .bubble-avatar.user {
-        background: #e8f5e9;
-        color: #1d9e75;
-        font-weight: 600;
-      }
+<!-- Vapi Web SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/vapi.js"></script>
 
-      .bubble {
-        max-width: 75%;
-        padding: 10px 14px;
-        border-radius: 16px;
-        font-size: 0.88rem;
-        line-height: 1.55;
-        position: relative;
-      }
-      .bubble.agent {
-        background: white;
-        border: 1px solid #e8e8e8;
-        border-bottom-left-radius: 4px;
-        color: #222;
-      }
-      .bubble.user {
-        background: #185fa5;
-        color: white;
-        border-bottom-right-radius: 4px;
-      }
-      .bubble .ts {
-        display: block;
-        font-size: 0.68rem;
-        margin-top: 4px;
-        opacity: 0.55;
-      }
-      .bubble.agent .ts {
-        text-align: left;
-      }
-      .bubble.user .ts {
-        text-align: right;
-        color: rgba(255, 255, 255, 0.7);
-      }
+<script>
+  const PUBLIC_KEY  = "YOUR_VAPI_PUBLIC_KEY";   // 🔑 from Vapi Dashboard → Account → API Keys
+  const ASSISTANT_ID = "e6027c22-8da9-426d-b621-87da74856ae2";  // your assistant ID
 
-      /* Typing indicator */
-      .typing-indicator {
-        display: none;
-        gap: 8px;
-        align-items: flex-end;
-      }
-      .typing-dots {
-        background: white;
-        border: 1px solid #e8e8e8;
-        border-radius: 16px;
-        border-bottom-left-radius: 4px;
-        padding: 12px 16px;
-        display: flex;
-        gap: 4px;
-        align-items: center;
-      }
-      .typing-dots span {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #185fa5;
-        animation: bounce 1.2s infinite;
-      }
-      .typing-dots span:nth-child(2) {
-        animation-delay: 0.2s;
-      }
-      .typing-dots span:nth-child(3) {
-        animation-delay: 0.4s;
-      }
-      @keyframes bounce {
-        0%,
-        60%,
-        100% {
-          transform: translateY(0);
-        }
-        30% {
-          transform: translateY(-6px);
-        }
-      }
+  const vapi = new Vapi(PUBLIC_KEY);
+  let active = false;
 
-      .empty-state {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        color: #aaa;
-        font-size: 0.85rem;
-        padding: 2rem;
-        text-align: center;
-      }
-      .empty-state .icon {
-        font-size: 2.5rem;
-        margin-bottom: 4px;
-      }
+  // ── Event listeners ──────────────────────────────────────────
+  vapi.on("call-start", () => {
+    setStatus("Connected · Speak now", true);
+    document.getElementById("transcript").style.display = "block";
+  });
 
-      /* Controls bar */
-      .controls {
-        padding: 1rem 1.25rem;
-        border-top: 1px solid #eee;
-        background: white;
-      }
+  vapi.on("call-end", () => {
+    setStatus("Call ended", false);
+    active = false;
+    const btn = document.getElementById("callBtn");
+    btn.textContent = "📞 Start Call";
+    btn.classList.remove("end");
+  });
 
-      /* Mode tabs */
-      .mode-tabs {
-        display: flex;
-        gap: 6px;
-        margin-bottom: 10px;
-      }
-      .tab {
-        flex: 1;
-        padding: 7px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background: white;
-        font-size: 0.8rem;
-        font-weight: 500;
-        color: #666;
-        cursor: pointer;
-        transition: all 0.15s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-      }
-      .tab.active {
-        background: #e6f1fb;
-        border-color: #185fa5;
-        color: #185fa5;
-      }
-      .tab:hover:not(.active) {
-        background: #f5f5f5;
-      }
+  vapi.on("speech-start", () => setStatus("Agent speaking…", true));
+  vapi.on("speech-end",   () => setStatus("Listening…", true));
 
-      /* Chat input row */
-      .chat-row {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-      #chatInput {
-        flex: 1;
-        padding: 10px 14px;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        font-size: 0.88rem;
-        outline: none;
-        transition: border-color 0.15s;
-      }
-      #chatInput:focus {
-        border-color: #185fa5;
-      }
-      #chatInput:disabled {
-        background: #f5f5f5;
-        color: #aaa;
-      }
+  vapi.on("message", (msg) => {
+    if (msg.type === "transcript") {
+      addTranscript(msg.role, msg.transcript);
+    }
+  });
 
-      .send-btn {
-        width: 38px;
-        height: 38px;
-        border-radius: 10px;
-        border: none;
-        background: #185fa5;
-        color: white;
-        font-size: 1.1rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        transition: background 0.15s;
-      }
-      .send-btn:hover {
-        background: #0c447c;
-      }
-      .send-btn:disabled {
-        background: #aaa;
-        cursor: not-allowed;
-      }
+  vapi.on("error", (err) => {
+    console.error(err);
+    setStatus("Error — check console", false);
+  });
 
-      /* Voice call row */
-      .voice-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .call-btn {
-        flex: 1;
-        padding: 11px;
-        border: none;
-        border-radius: 10px;
-        background: #185fa5;
-        color: white;
-        font-size: 0.92rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 7px;
-      }
-      .call-btn:hover {
-        background: #0c447c;
-      }
-      .call-btn.end {
-        background: #a32d2d;
-      }
-      .call-btn.end:hover {
-        background: #791f1f;
-      }
-      .call-btn:disabled {
-        background: #aaa;
-        cursor: not-allowed;
-      }
+  // ── Controls ─────────────────────────────────────────────────
+  function toggleCall() {
+    if (!active) {
+      active = true;
+      setStatus("Connecting…", false);
+      const btn = document.getElementById("callBtn");
+      btn.textContent = "🔴 End Call";
+      btn.classList.add("end");
+      vapi.start(ASSISTANT_ID);
+    } else {
+      vapi.stop();
+    }
+  }
 
-      /* Mute button */
-      .mute-btn {
-        width: 42px;
-        height: 42px;
-        border-radius: 10px;
-        border: 1px solid #ddd;
-        background: white;
-        font-size: 1.1rem;
-        cursor: pointer;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.15s;
-      }
-      .mute-btn.show {
-        display: flex;
-      }
-      .mute-btn.muted {
-        background: #fee2e2;
-        border-color: #fca5a5;
-      }
+  function setStatus(text, live) {
+    document.getElementById("statusText").textContent = text;
+    document.getElementById("dot").className = "dot" + (live ? " live" : "");
+  }
 
-      /* Volume bar */
-      .vol-wrap {
-        display: none;
-        align-items: center;
-        gap: 6px;
-        margin-top: 6px;
-      }
-      .vol-wrap.show {
-        display: flex;
-      }
-      .vol-label {
-        font-size: 0.72rem;
-        color: #888;
-        width: 24px;
-      }
-      .vol-bar {
-        flex: 1;
-        height: 4px;
-        background: #eee;
-        border-radius: 2px;
-        overflow: hidden;
-      }
-      .vol-fill {
-        height: 100%;
-        background: #185fa5;
-        width: 0%;
-        transition: width 0.1s;
-        border-radius: 2px;
-      }
-
-      .note {
-        font-size: 0.72rem;
-        color: #bbb;
-        text-align: center;
-        margin-top: 8px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <!-- Header -->
-      <div class="header">
-        <div class="avatar">🤖</div>
-        <div class="header-info">
-          <h2>AI Voice Assistant</h2>
-          <p>Powered by Vapi</p>
-        </div>
-        <div class="status-badge">
-          <span class="dot" id="dot"></span>
-          <span id="statusText">Loading…</span>
-        </div>
-      </div>
-
-      <!-- Transcript -->
-      <div class="transcript" id="transcript">
-        <div class="empty-state" id="emptyState">
-          <div class="icon">💬</div>
-          <strong>Start a conversation</strong>
-          <span>Use voice or type a message below</span>
-        </div>
-        <div class="typing-indicator" id="typingIndicator">
-          <div class="bubble-avatar agent">AI</div>
-          <div class="typing-dots"><span></span><span></span><span></span></div>
-        </div>
-      </div>
-
-      <!-- Controls -->
-      <div class="controls">
-        <!-- Mode Tabs -->
-        <div class="mode-tabs">
-          <button
-            class="tab active"
-            id="tabVoice"
-            onclick="switchMode('voice')"
-          >
-            🎙️ Voice Call
-          </button>
-          <button class="tab" id="tabChat" onclick="switchMode('chat')">
-            ✏️ Text Chat
-          </button>
-        </div>
-
-        <!-- Voice Panel -->
-        <div id="voicePanel">
-          <div class="voice-row">
-            <button
-              class="mute-btn"
-              id="muteBtn"
-              onclick="toggleMute()"
-              title="Mute"
-            >
-              🎤
-            </button>
-            <button
-              class="call-btn"
-              id="callBtn"
-              disabled
-              onclick="toggleCall()"
-            >
-              📞 Start Voice Call
-            </button>
-          </div>
-          <div class="vol-wrap" id="volWrap">
-            <span class="vol-label">🔊</span>
-            <div class="vol-bar"><div class="vol-fill" id="volFill"></div></div>
-          </div>
-        </div>
-
-        <!-- Chat Panel -->
-        <div id="chatPanel" style="display: none">
-          <div class="chat-row">
-            <input
-              type="text"
-              id="chatInput"
-              placeholder="Type a message… (Enter to send)"
-              disabled
-            />
-            <button class="send-btn" id="sendBtn" disabled onclick="sendChat()">
-              ➤
-            </button>
-          </div>
-        </div>
-
-        <p class="note" id="noteText">
-          No phone number needed · Free browser call
-        </p>
-      </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js"></script>
-    <script>
-      // ── CONFIG ─────────────────────────────────────────────────────
-      var PUBLIC_KEY = "38308316-bd09-45a0-894a-55af9a09eb11";
-      var ASSISTANT_ID = "e6027c22-8da9-426d-b621-87da74856ae2";
-
-      // ── STATE ──────────────────────────────────────────────────────
-      var vapi = null;
-      var callActive = false;
-      var muted = false;
-      var currentMode = "voice";
-      var partialMap = {}; // tracks partial transcript bubbles
-
-      // ── INIT ───────────────────────────────────────────────────────
-      window.addEventListener("load", function () {
-        if (typeof window.Vapi !== "undefined") {
-          vapi = new window.Vapi(PUBLIC_KEY);
-          attachEvents();
-          setStatus("Ready", false);
-          document.getElementById("callBtn").disabled = false;
-          document.getElementById("chatInput").disabled = false;
-          document.getElementById("sendBtn").disabled = false;
-        } else {
-          setStatus("SDK error", false);
-        }
-      });
-
-      // ── VAPI EVENTS ────────────────────────────────────────────────
-      function attachEvents() {
-        vapi.on("call-start", function () {
-          callActive = true;
-          setStatus("Live", true);
-          hideEmpty();
-          var btn = document.getElementById("callBtn");
-          btn.textContent = "🔴 End Call";
-          btn.classList.add("end");
-          document.getElementById("muteBtn").classList.add("show");
-          document.getElementById("volWrap").classList.add("show");
-        });
-
-        vapi.on("call-end", function () {
-          callActive = false;
-          muted = false;
-          setStatus("Ready", false);
-          var btn = document.getElementById("callBtn");
-          btn.textContent = "📞 Start Voice Call";
-          btn.classList.remove("end");
-          document.getElementById("muteBtn").classList.remove("show");
-          document.getElementById("muteBtn").textContent = "🎤";
-          document.getElementById("muteBtn").classList.remove("muted");
-          document.getElementById("volWrap").classList.remove("show");
-          document.getElementById("volFill").style.width = "0%";
-        });
-
-        vapi.on("speech-start", function () {
-          setStatus("Agent speaking…", true);
-          showTyping(false);
-        });
-
-        vapi.on("speech-end", function () {
-          setStatus("Listening…", true);
-        });
-
-        // Live transcript — partial + final
-        vapi.on("message", function (msg) {
-          if (msg.type === "transcript") {
-            handleTranscript(msg.role, msg.transcript, msg.transcriptType);
-          }
-          if (msg.type === "volume-level") {
-            var pct = Math.min(100, Math.round(msg.level * 200));
-            document.getElementById("volFill").style.width = pct + "%";
-          }
-        });
-
-        vapi.on("error", function (err) {
-          console.error("Vapi error:", err);
-          setStatus("Error — check console", false);
-          callActive = false;
-          var btn = document.getElementById("callBtn");
-          btn.textContent = "📞 Start Voice Call";
-          btn.classList.remove("end");
-        });
-      }
-
-      // ── TRANSCRIPT HANDLER ─────────────────────────────────────────
-      function handleTranscript(role, text, type) {
-        if (!text || !text.trim()) return;
-        hideEmpty();
-        showTyping(false);
-
-        var key = role + "-partial";
-
-        if (type === "partial") {
-          if (partialMap[key]) {
-            // Update existing partial bubble
-            partialMap[key].querySelector(".bubble-text").textContent = text;
-          } else {
-            var el = createBubble(role, text, true);
-            partialMap[key] = el;
-          }
-        } else {
-          // Final — remove partial if exists
-          if (partialMap[key]) {
-            partialMap[key].remove();
-            delete partialMap[key];
-          }
-          createBubble(role, text, false);
-        }
-      }
-
-      function createBubble(role, text, isPartial) {
-        var wrap = document.createElement("div");
-        wrap.className = "bubble-wrap " + (role === "user" ? "user" : "");
-
-        var av = document.createElement("div");
-        av.className = "bubble-avatar " + (role === "user" ? "user" : "agent");
-        av.textContent = role === "user" ? "You" : "AI";
-
-        var bubble = document.createElement("div");
-        bubble.className = "bubble " + (role === "user" ? "user" : "agent");
-        if (isPartial) bubble.style.opacity = "0.6";
-
-        var textEl = document.createElement("span");
-        textEl.className = "bubble-text";
-        textEl.textContent = text;
-
-        var ts = document.createElement("span");
-        ts.className = "ts";
-        ts.textContent = getTime();
-
-        bubble.appendChild(textEl);
-        bubble.appendChild(ts);
-        wrap.appendChild(av);
-        wrap.appendChild(bubble);
-
-        var transcript = document.getElementById("transcript");
-        var typing = document.getElementById("typingIndicator");
-        transcript.insertBefore(wrap, typing);
-        transcript.scrollTop = transcript.scrollHeight;
-
-        return wrap;
-      }
-
-      // ── VOICE CALL ─────────────────────────────────────────────────
-      function toggleCall() {
-        if (!vapi) return;
-        if (!callActive) {
-          setStatus("Connecting…", false);
-          document.getElementById("callBtn").disabled = true;
-          setTimeout(function () {
-            document.getElementById("callBtn").disabled = false;
-          }, 3000);
-          vapi.start(ASSISTANT_ID);
-        } else {
-          vapi.stop();
-        }
-      }
-
-      function toggleMute() {
-        if (!vapi || !callActive) return;
-        muted = !muted;
-        vapi.setMuted(muted);
-        var btn = document.getElementById("muteBtn");
-        btn.textContent = muted ? "🔇" : "🎤";
-        btn.classList.toggle("muted", muted);
-      }
-
-      // ── TEXT CHAT ──────────────────────────────────────────────────
-      function sendChat() {
-        if (!vapi) return;
-        var input = document.getElementById("chatInput");
-        var text = input.value.trim();
-        if (!text) return;
-
-        hideEmpty();
-        createBubble("user", text, false);
-        input.value = "";
-
-        if (!callActive) {
-          // Start call silently then send message
-          setStatus("Connecting…", false);
-          vapi.start(ASSISTANT_ID);
-          vapi.once("call-start", function () {
-            setTimeout(function () {
-              vapi.send({
-                type: "add-message",
-                message: { role: "user", content: text },
-              });
-              showTyping(true);
-            }, 500);
-          });
-        } else {
-          vapi.send({
-            type: "add-message",
-            message: { role: "user", content: text },
-          });
-          showTyping(true);
-        }
-      }
-
-      document.addEventListener("DOMContentLoaded", function () {
-        var input = document.getElementById("chatInput");
-        if (input) {
-          input.addEventListener("keydown", function (e) {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              sendChat();
-            }
-          });
-        }
-      });
-
-      // ── MODE SWITCH ────────────────────────────────────────────────
-      function switchMode(mode) {
-        currentMode = mode;
-        document.getElementById("voicePanel").style.display =
-          mode === "voice" ? "block" : "none";
-        document.getElementById("chatPanel").style.display =
-          mode === "chat" ? "block" : "none";
-        document
-          .getElementById("tabVoice")
-          .classList.toggle("active", mode === "voice");
-        document
-          .getElementById("tabChat")
-          .classList.toggle("active", mode === "chat");
-        document.getElementById("noteText").textContent =
-          mode === "voice"
-            ? "No phone number needed · Free browser call"
-            : "Text is sent to your Vapi assistant";
-      }
-
-      // ── HELPERS ────────────────────────────────────────────────────
-      function setStatus(text, live) {
-        document.getElementById("statusText").textContent = text;
-        document.getElementById("dot").className =
-          "dot" + (live ? " live" : "");
-      }
-
-      function showTyping(show) {
-        document.getElementById("typingIndicator").style.display = show
-          ? "flex"
-          : "none";
-        if (show) {
-          var t = document.getElementById("transcript");
-          t.scrollTop = t.scrollHeight;
-        }
-      }
-
-      function hideEmpty() {
-        var e = document.getElementById("emptyState");
-        if (e) e.style.display = "none";
-      }
-
-      function getTime() {
-        return new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-      }
-    </script>
-  </body>
+  function addTranscript(role, text) {
+    const box = document.getElementById("transcript");
+    const p = document.createElement("p");
+    p.className = role === "user" ? "user" : "bot";
+    p.textContent = (role === "user" ? "You: " : "Agent: ") + text;
+    box.appendChild(p);
+    box.scrollTop = box.scrollHeight;
+  }
+</script>
+</body>
 </html>
