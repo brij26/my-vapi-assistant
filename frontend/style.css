@@ -1,0 +1,179 @@
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:Arial, sans-serif;
+  background:#f5f5f3;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.container{
+  width:100%;
+  max-width:420px;
+}
+
+.card{
+  background:white;
+  border-radius:18px;
+  padding:28px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.08);
+}
+
+.avatar{
+  width:80px;
+  height:80px;
+  border-radius:50%;
+  background:#e6f1fb;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:auto;
+  font-size:36px;
+}
+
+h2{
+  margin-top:16px;
+  text-align:center;
+  color:#222;
+}
+
+.subtitle{
+  text-align:center;
+  margin-top:8px;
+  color:#666;
+  font-size:14px;
+  line-height:1.5;
+}
+
+.status{
+  margin-top:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  font-size:14px;
+}
+
+.dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#999;
+}
+
+.dot.live{
+  background:#14a44d;
+  animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+  0%{opacity:1;}
+  50%{opacity:0.4;}
+  100%{opacity:1;}
+}
+
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+  font-size:15px;
+  font-weight:bold;
+  transition:0.2s;
+}
+
+.call-btn{
+  margin-top:22px;
+  background:#185FA5;
+  color:white;
+}
+
+.call-btn:hover{
+  background:#0f4b86;
+}
+
+.call-btn.end{
+  background:#c62828;
+}
+
+.chat-container{
+  margin-top:28px;
+}
+
+.chat-title{
+  font-size:16px;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+
+#messages{
+  height:320px;
+  overflow-y:auto;
+  border:1px solid #ddd;
+  border-radius:14px;
+  padding:14px;
+  background:#fafafa;
+}
+
+.message{
+  margin-bottom:14px;
+  line-height:1.6;
+  font-size:14px;
+}
+
+.user-msg{
+  color:#185FA5;
+}
+
+.bot-msg{
+  color:#14a44d;
+}
+
+.input-area{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
+}
+
+#userInput{
+  flex:1;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  outline:none;
+}
+
+.send-btn{
+  width:auto;
+  padding:12px 18px;
+  background:#185FA5;
+  color:white;
+}
+
+.booking-btn{
+  margin-top:20px;
+  background:#14a44d;
+  color:white;
+  text-decoration:none;
+  display:block;
+  text-align:center;
+  padding:14px;
+  border-radius:12px;
+  font-weight:bold;
+}
+
+.note{
+  margin-top:18px;
+  text-align:center;
+  font-size:12px;
+  color:#888;
+  line-height:1.5;
+}
