@@ -34,7 +34,7 @@ retriever = vectorstore.as_retriever(
 # =========================
 
 def retrieve_context(query):
-
+    query = query.strip()
     docs = retriever.invoke(query)
 
     context = "\n\n".join([
